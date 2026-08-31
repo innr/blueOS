@@ -1,0 +1,28 @@
+{
+  "package": "com.innr.blueos.audiobook",
+  "name": "听书",
+  "versionName": "0.2.0",
+  "versionCode": 2,
+  "appCategory": ["audiobooks"],
+  "icon": "/assets/images/logo.svg",
+  "features": [
+    { "name": "blueos.app.appmanager.router" },
+    { "name": "blueos.app.app" }
+  ],
+  "deviceTypeList": ["watch", "watch-round", "watch-square"],
+  "config": {
+    "designWidth": 466
+  },
+  "router": {
+    "entry": "pages/home",
+    "pages": {
+      "pages/home": {
+        "component": "index",
+        "launchMode": "singleTask"
+      }
+    }
+  },
+  "display": {
+    "backgroundColor": "#0D1117"
+  }
+}
