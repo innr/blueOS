@@ -29,9 +29,13 @@ python tools/release_sha256.py dist/*.rpk mobile/app/build/outputs/apk/**/*.apk
 
 应用已声明并调用 Studio 类型包确认的 `blueos.media.audio.audioPlayer`、
 `blueos.media.audio.audioManager`、`blueos.storage.storage`、
-`blueos.storage.file` 和 `blueos.bluexlink.connectionManager`。音频从
-`internal://mass/` 扫描 MP3；没有文件时会明确提示先同步。手机连接实例仍需
-填入手机包名与证书指纹，并在真机上确认权限。
+`blueos.storage.file`、`blueos.network.networkManager`、
+`blueos.network.webSocket` 和 `blueos.bluexlink.connectionManager`，并按官方
+方案声明 `blueos.ai.speech`。播放页不再扫描 `internal://mass/` 或要求导入 MP3，
+而是将在线 TTS chunk 写入 `internal://cache/tts/`，完成后原子移动到
+`internal://files/tts/`。TTS 凭据必须通过 Studio 安全配置/构建注入；当前 SDK
+没有公开类型声明，`createTts` 参数、chunk 回调和真实音频格式仍需在 WATCH GT
+上确认。手机连接实例仍需填入手机包名与证书指纹，并在真机上确认权限。
 
 `my-application-1/src/platform/audio.js` 和 `progress.js` 继续作为业务层抽象，
 便于在不同 SDK 版本间替换实现。

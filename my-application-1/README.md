@@ -44,3 +44,23 @@ pnpm i
 |  命令 | 描述  | 备注 |
 |---|---|---|
 | `pnpm gen`  | 新增「 BlueOS 应用」页面 | [Studio 已内置，可通过图形化操作](https://studio.blueos.com.cn/write/create-page/) |
+
+### 在线文字朗读
+
+播放页现在采用“在线 TTS 预取 + 本地缓存播放”路径，不要求用户导入 MP3：
+
+- 章节正文按约 5 分钟切成 segment，在线时串行调用 `@blueos.ai.speech`。
+- 音频先写入 `internal://cache/tts/` 临时 URI，接收完成后移动到 `internal://files/tts/` 并更新索引。
+- 缓存目标约 30 分钟；断网停止新请求，但继续播放已完成 segment，重连后先 probe 再恢复。
+- TTS 凭据只能通过 Studio 安全配置/构建注入，不能提交到 Git。当前凭据为空时会显示“等待 TTS 凭据或网络”。
+
+在 Studio 调试控制台中可临时配置当前运行会话（不要把真实值写入代码或提交）：
+
+```js
+global.configureTts('你的 appId', '你的 appKey')
+global.getTtsStatus()
+```
+
+返回 `{ apiAvailable: true, credentialsConfigured: true }` 后，返回播放页或重新打开章节即可触发 TTS probe。
+
+在目标设备上配置凭据后，可运行 `pnpm test:tts` 验证主机端文本分段、预取状态机和播放器适配器；真实 TTS 音频格式、网络和息屏行为仍需 WATCH GT 真机验收。

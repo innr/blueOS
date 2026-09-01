@@ -1,10 +1,10 @@
 # Android companion (P1-5)
 
-This is the companion-app boundary for importing MP3 chapters, managing
-`Book`/`Chapter` models, and enqueueing transfer tasks. `AudioImporter` reads a
-content URI and rejects unsupported formats. BLE discovery and transfer are
-injected behind the protocol adapter once the official device permissions and
-GATT contract are confirmed.
+This companion project is reserved for the T7 fallback path. V1 first attempts
+online TTS prefetch directly from the watch; only if the T0 network probe proves
+that WATCH GT cannot reach the official TTS service should a phone-side TTS
+provider be implemented here. No user-supplied MP3 import is part of the new
+plan.
 
 Build with the Android SDK and Gradle wrapper in a configured Android
 environment; this repository does not vendor the SDK or wrapper binaries.

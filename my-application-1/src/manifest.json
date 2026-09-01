@@ -13,6 +13,9 @@
       "name": "blueos.media.audio.audioPlayer"
     },
     {
+      "name": "blueos.media.audio.mediaManager"
+    },
+    {
       "name": "blueos.media.audio.audioManager"
     },
     {
@@ -20,6 +23,15 @@
     },
     {
       "name": "blueos.storage.file"
+    },
+    {
+      "name": "blueos.network.networkManager"
+    },
+    {
+      "name": "blueos.network.webSocket"
+    },
+    {
+      "name": "blueos.ai.speech"
     },
     {
       "name": "blueos.bluexlink.connectionManager"

@@ -4,7 +4,8 @@
   "packageManager": "pnpm@^9.9.0",
   "description": "Sample Template",
   "scripts": {
-    "gen": "node ./scripts/gen/index.js"
+    "gen": "node ./scripts/gen/index.js",
+    "test:tts": "node --experimental-default-type=module ./scripts/test-tts-services.mjs"
   },
   "prettier": {
     "singleQuote": true,

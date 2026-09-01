@@ -2,9 +2,9 @@
   <div class="page">
     <div class="topbar"><input class="back" type="button" value="‹" onclick="onBackClick" /><text class="top-title">正在播放</text><text class="more">···</text></div>
     <div class="book-cover"><text class="cover-title">云边有个</text><text class="cover-title">小卖部</text><text class="cover-author">张嘉佳</text></div>
-    <div class="book-details"><text class="name">{{ bookTitle }}</text><text class="narrator">{{ bookAuthor }} · 演播：有声剧场</text></div>
+    <div class="book-details"><text class="name">{{ bookTitle }}</text><text class="narrator">{{ bookAuthor }} · 在线文字朗读</text><text class="content-preview">{{ chapterContent }}</text><text class="network">{{ networkType }}</text><text class="prefetch-status">{{ prefetchStatus }}</text></div>
     <div class="chapter"><text class="chapter-label">第 {{ chapter }} 章</text><text class="chapter-name">{{ chapterName }}</text></div>
-    <div class="timeline"><div class="line"><div class="played" style="width: {{ progress }}%;"></div><div class="knob"></div></div><div class="times"><text>{{ currentTime }}</text><text>28:40</text></div></div>
+    <div class="timeline"><div class="line"><div class="played" style="width: {{ progress }}%;"></div><div class="knob"></div></div><div class="times"><text>{{ currentTime }}</text><text>{{ durationText }}</text></div></div>
     <div class="controls"><input class="skip" type="button" value="↶ 15" onclick="onPreviousClick" /><input class="play" type="button" value="{{ playing ? 'Ⅱ' : '▶' }}" onclick="onPlayClick" /><input class="skip" type="button" value="15 ↷" onclick="onNextClick" /></div>
     <text class="error" if="{{ errorText }}">{{ errorText }}</text>
     <div class="volume-row"><text class="volume-label">音量</text><input class="volume-button" type="button" value="−" onclick="onVolumeDownClick" /><div class="volume-track"><div class="volume-fill" style="width: {{ volume }}%;"></div></div><input class="volume-button" type="button" value="+" onclick="onVolumeUpClick" /><text class="volume-value">{{ volume }}%</text></div>
@@ -27,6 +27,13 @@ export default {
     ,bookAuthor: '张嘉佳'
     ,errorText: ''
     ,audioReady: false
+    ,chapterContent: ''
+    ,networkType: '检测网络中'
+    ,segment: null
+    ,chapterDurationMs: 1720000
+    ,lastPrefetchAt: 0
+    ,prefetchStatus: '等待预缓存'
+    ,durationText: '28:40'
   },
   onShow() {
     this.restorePlayback()
@@ -38,28 +45,75 @@ export default {
     }
     this.chapter = chapter ? chapter.number : global.player.chapter
     this.chapterName = chapter ? chapter.title : global.player.chapterName
+    this.chapterContent = chapter ? chapter.content : ''
+    this.chapterDurationMs = chapter ? this.parseDuration(chapter.duration) : 1720000
+    this.durationText = chapter ? chapter.duration : '28:40'
     this.progress = global.player.progress
     this.currentTime = global.player.currentTime
     this.bindAudioEvents()
-    global.findLocalAudio((uri) => {
-      this.audioReady = !!uri
-      if (uri) {
-        global.player.localUri = uri
+    global.probeNetwork((online, type) => {
+      this.networkType = online ? '网络可用 · ' + type : '离线，仅播放已缓存语音'
+      this.prefetchStatus = online ? '正在探测在线 TTS…' : '仅播放已完成缓存'
+    })
+    global.findCachedSegment((segment) => {
+      this.segment = segment
+      this.audioReady = !!segment
+      if (segment) {
+        global.player.localUri = segment.uri
         this.errorText = ''
       }
+    })
+    global.prefetchChapter(global.player.bookId, global.player.chapterId, this.chapterContent, global.player.positionMs).then((segments) => {
+      this.prefetchStatus = segments.length ? '已生成 ' + segments.length + ' 个语音片段' : (this.audioReady ? '缓存已就绪' : '等待 TTS 凭据或网络')
+      global.findCachedSegmentAt(global.player.positionMs, (segment) => {
+        if (!segment && segments.length && segments[0]) segment = segments[0]
+        if (!segment) return
+        this.segment = segment
+        global.player.localUri = segment.uri
+        this.audioReady = true
+        this.errorText = ''
+      })
+    }).catch(() => {
+      this.prefetchStatus = '预缓存失败，保留已有语音'
+      this.errorText = this.networkType.indexOf('离线') === 0 ? '暂无已缓存语音' : '在线 TTS 预取失败，请稍后重试'
     })
   },
   onBackClick() { global.router.back() },
   onPlayClick() {
-    if (!this.audioReady || !global.player.localUri) {
-      this.errorText = '暂无本地音频，请先从手机同步 MP3'
+    if (this.playing) {
+      try { global.watchAudioPlayer.pause() } catch (error) {}
       return
     }
+    if (!this.audioReady || !global.player.localUri) {
+      this.errorText = this.networkType.indexOf('离线') === 0 ? '暂无已缓存语音' : '正在生成语音，请稍候'
+      global.prefetchChapter(global.player.bookId, global.player.chapterId, this.chapterContent, global.player.positionMs).then((segments) => {
+        this.prefetchStatus = segments.length ? '语音已生成，开始播放' : '没有可播放的缓存片段'
+        global.findCachedSegmentAt(global.player.positionMs, (segment) => {
+          if (!segment && segments.length) segment = segments[0]
+          if (!segment) {
+          this.errorText = 'TTS 不可用，请检查网络或凭据'
+          return
+          }
+          this.segment = segment
+          global.player.localUri = segment.uri
+          this.audioReady = true
+          this.errorText = ''
+          this.startAudio()
+        })
+      }).catch(() => { this.errorText = '语音生成失败，请稍后重试' })
+      return
+    }
+    this.startAudio()
+  },
+  startAudio() {
     this.errorText = ''
     try {
-      global.audioPlayer.src = global.player.localUri
-      if (this.playing) global.audioPlayer.pause()
-      else global.audioPlayer.play()
+      const sameSource = global.watchAudioPlayer.uri === global.player.localUri
+      if (!sameSource) {
+        const segmentOffsetMs = this.segment ? Math.max(0, global.player.positionMs - global.getSegmentOffsetMs(this.segment)) : 0
+        global.watchAudioPlayer.prepare(global.player.localUri, segmentOffsetMs)
+      }
+      global.watchAudioPlayer.play()
     } catch (error) {
       this.errorText = '音频播放失败，请检查文件格式'
       this.playing = false
@@ -86,31 +140,49 @@ export default {
   },
   skipSeconds(offset) {
     if (!global.player.localUri) {
-      this.errorText = '暂无本地音频，无法调整进度'
+      this.errorText = '暂无语音章节，无法调整进度'
       return
     }
-    const currentSeconds = Math.round((1720 * this.progress) / 100)
-    this.setPosition(((currentSeconds + offset) * 100) / 1720)
+    const currentSeconds = Math.round((this.chapterDurationMs / 1000 * this.progress) / 100)
+    this.setPosition(((currentSeconds + offset) * 100) / (this.chapterDurationMs / 1000))
   },
   setPosition(progress) {
     this.progress = Math.max(0, Math.min(100, progress))
-    const seconds = Math.round((1720 * this.progress) / 100)
+    const seconds = Math.round((this.chapterDurationMs / 1000 * this.progress) / 100)
     const minutes = Math.floor(seconds / 60)
     const remaining = seconds % 60
     this.currentTime = minutes + ':' + (remaining < 10 ? '0' : '') + remaining
-    try { global.audioPlayer.currentTime = seconds } catch (error) {}
+    const targetPositionMs = seconds * 1000
+    const wasPlaying = this.playing
+    global.findCachedSegmentAt(targetPositionMs, (segment) => {
+      if (segment && (!this.segment || segment.id !== this.segment.id)) {
+        this.segment = segment
+        global.player.localUri = segment.uri
+        this.audioReady = true
+        try {
+          global.watchAudioPlayer.prepare(segment.uri, Math.max(0, targetPositionMs - global.getSegmentOffsetMs(segment)))
+          if (wasPlaying) global.watchAudioPlayer.play()
+        } catch (error) { this.errorText = '目标位置尚未缓存' }
+      } else {
+        try {
+          const offsetMs = this.segment ? Math.max(0, targetPositionMs - global.getSegmentOffsetMs(this.segment)) : targetPositionMs
+          global.watchAudioPlayer.seek(offsetMs)
+        } catch (error) {}
+      }
+    })
     this.savePlayerState()
   },
   updatePositionFromAudio(seconds) {
-    this.progress = Math.max(0, Math.min(100, (seconds * 100) / 1720))
-    const wholeSeconds = Math.round(seconds)
+    const chapterSeconds = (this.segment ? global.getSegmentOffsetMs(this.segment) / 1000 : 0) + seconds
+    this.progress = Math.max(0, Math.min(100, (chapterSeconds * 100) / (this.chapterDurationMs / 1000)))
+    const wholeSeconds = Math.round(chapterSeconds)
     const minutes = Math.floor(wholeSeconds / 60)
     const remaining = wholeSeconds % 60
     this.currentTime = minutes + ':' + (remaining < 10 ? '0' : '') + remaining
     this.savePlayerState()
   },
   savePlayerState() {
-    global.player.positionMs = Math.round((1720 * this.progress / 100) * 1000)
+    global.player.positionMs = Math.round(this.chapterDurationMs * this.progress / 100)
     global.player.chapter = this.chapter
     global.player.chapterName = this.chapterName
     global.player.progress = this.progress
@@ -136,7 +208,7 @@ export default {
         value: JSON.stringify({
           bookId: global.player.bookId,
           chapterId: global.player.chapterId,
-          positionMs: Math.round((1720 * this.progress / 100) * 1000),
+          positionMs: Math.round(this.chapterDurationMs * this.progress / 100),
           progress: this.progress,
           currentTime: this.currentTime
         })
@@ -144,16 +216,62 @@ export default {
     } catch (error) {}
   },
   bindAudioEvents() {
-    global.audioPlayer.onPlay = () => { this.playing = true }
-    global.audioPlayer.onPause = () => { this.playing = false; this.persistPlayback() }
-    global.audioPlayer.onStop = () => { this.playing = false; this.persistPlayback() }
-    global.audioPlayer.onEnded = () => { this.playing = false; this.progress = 100; this.persistPlayback() }
-    global.audioPlayer.onError = () => { this.playing = false; this.errorText = '音频播放失败，请检查 MP3 文件' }
-    global.audioPlayer.onTimeUpdate = () => {
-      const seconds = Number(global.audioPlayer.currentTime) || 0
-      this.updatePositionFromAudio(seconds)
-      this.persistPlayback()
-    }
+    global.watchAudioPlayer.bind({
+      play: () => { this.playing = true },
+      pause: () => { this.playing = false; this.persistPlayback() },
+      stop: () => { this.playing = false; this.persistPlayback() },
+      ended: () => { this.onSegmentEnded() },
+      error: () => { this.playing = false; this.errorText = '语音缓存播放失败，请重新生成' },
+      timeUpdate: () => {
+        const seconds = Number(global.watchAudioPlayer.api.currentTime) || 0
+        this.updatePositionFromAudio(seconds)
+        this.persistPlayback()
+        this.requestPrefetch()
+      }
+    })
+  },
+  onSegmentEnded() {
+    global.findNextCachedAudio(this.segment && this.segment.uri, (next) => {
+      if (!next) {
+        this.playing = false
+        this.progress = 100
+        this.persistPlayback()
+        return
+      }
+      this.segment = next
+      global.player.localUri = next.uri
+      if (next.chapterId !== global.player.chapterId) this.switchChapter(next.chapterId)
+      this.audioReady = true
+      this.startAudio()
+    })
+  },
+  parseDuration(value) {
+    const parts = String(value || '').split(':').map((item) => Number(item) || 0)
+    return (parts.length === 2 ? parts[0] * 60 + parts[1] : 1720) * 1000
+  },
+  segmentDurationMs() {
+    return (global.prefetchManager && global.prefetchManager.config.segmentTargetMs) || 300000
+  },
+  switchChapter(chapterId) {
+    const book = global.library.find((item) => item.id === global.player.bookId)
+    const chapter = book && book.chapters.find((item) => item.id === chapterId)
+    if (!chapter) return
+    global.player.chapterId = chapter.id
+    this.chapter = chapter.number
+    this.chapterName = chapter.title
+    this.chapterContent = chapter.content || ''
+    this.chapterDurationMs = this.parseDuration(chapter.duration)
+    this.durationText = chapter.duration
+    this.progress = 0
+    this.currentTime = '0:00'
+    this.savePlayerState()
+  },
+  requestPrefetch() {
+    if (!this.chapterContent) return
+    const now = Date.now()
+    if (now - this.lastPrefetchAt < 15000) return
+    this.lastPrefetchAt = now
+    global.prefetchChapter(global.player.bookId, global.player.chapterId, this.chapterContent, global.player.positionMs).catch(() => {})
   }
 }
 </script>
@@ -168,6 +286,6 @@ export default {
 .timeline { flex-direction: column; margin-top: 4 * $size-factor; }.line { width: 100%; height: 1 * $size-factor; background-color: #dfd8ce; align-items: center; }.played { width: 44%; height: 100%; background-color: #bd7040; }.knob { width: 2.5 * $size-factor; height: 2.5 * $size-factor; background-color: #bd7040; border-radius: 2 * $size-factor; margin-left: -1 * $size-factor; }.times { justify-content: space-between; margin-top: 1 * $size-factor; }.times text { color: #a89f95; font-size: 2.5 * $size-factor; }
 .controls { align-items: center; justify-content: center; margin-top: 5 * $size-factor; }.skip { width: 15 * $size-factor; color: #685e54; font-size: 3 * $size-factor; background-color: transparent; }.play { width: 14 * $size-factor; height: 14 * $size-factor; color: #fffaf2; font-size: 6 * $size-factor; background-color: #bd7040; border-radius: 8 * $size-factor; margin: 0 7 * $size-factor; }
 .volume-row { height: 7 * $size-factor; align-items: center; margin-top: 3 * $size-factor; }.volume-label { color: #81766b; font-size: 2.7 * $size-factor; }.volume-button { width: 6 * $size-factor; color: #776d62; font-size: 4 * $size-factor; background-color: transparent; text-align: center; }.volume-track { flex: 1; height: 1 * $size-factor; background-color: #dfd8ce; border-radius: 1 * $size-factor; }.volume-fill { height: 100%; background-color: #bd7040; border-radius: 1 * $size-factor; }.volume-value { width: 9 * $size-factor; color: #a0978d; font-size: 2.5 * $size-factor; text-align: right; }
-.error { color: #bb4d3d; font-size: 2.5 * $size-factor; text-align: center; margin-top: 2 * $size-factor; }
+.content-preview { width: 100%; color: #81766b; font-size: 2.5 * $size-factor; text-align: center; margin-top: 3 * $size-factor; lines: 2; }.network { color: #b06d39; font-size: 2.3 * $size-factor; margin-top: 1 * $size-factor; }.prefetch-status { color: #aa8a65; font-size: 2.2 * $size-factor; margin-top: 1 * $size-factor; }.error { color: #bb4d3d; font-size: 2.5 * $size-factor; text-align: center; margin-top: 2 * $size-factor; }
 .bottom { align-items: center; justify-content: center; margin-top: 3 * $size-factor; }.bottom-button, .speed, .timer { color: #776d62; font-size: 3 * $size-factor; background-color: transparent; }.divider { color: #d1c9bf; margin: 0 3 * $size-factor; }
 </style>
