@@ -28,7 +28,7 @@
       <text class="count">3 本</text>
     </div>
 
-    <div class="book-row" onclick="onLycheeClick">
+    <div class="book-row" onclick="onSeaClick">
       <div class="cover cover-blue"><text class="cover-mark small">海</text></div>
       <div class="book-info">
         <text class="row-title">海底两万里</text>
@@ -38,7 +38,7 @@
       <text class="play-mini">▶</text>
     </div>
 
-    <div class="book-row" onclick="onContinueClick">
+    <div class="book-row" onclick="onLycheeClick">
       <div class="cover cover-orange"><text class="cover-mark small">城</text></div>
       <div class="book-info">
         <text class="row-title">长安的荔枝</text>
@@ -48,7 +48,7 @@
       <text class="play-mini">▶</text>
     </div>
 
-    <div class="book-row" onclick="onBookClick">
+    <div class="book-row" onclick="onMoonClick">
       <div class="cover cover-green"><text class="cover-mark small">月</text></div>
       <div class="book-info">
         <text class="row-title">月亮与六便士</text>
@@ -87,21 +87,41 @@ export default {
     global.player.currentTime = '0:00'
     global.router.push({ uri: '/pages/DemoDetail' })
   },
+  onSeaClick() {
+    global.player.bookId = 'sea'
+    global.player.chapterId = 'sea-1'
+    global.player.positionMs = 0
+    global.player.chapter = 1
+    global.player.chapterName = '鹦鹉螺号'
+    global.player.progress = 0
+    global.player.currentTime = '0:00'
+    global.router.push({ uri: '/pages/DemoDetail' })
+  },
+  onMoonClick() {
+    global.player.bookId = 'moon'
+    global.player.chapterId = 'moon-1'
+    global.player.positionMs = 0
+    global.player.chapter = 1
+    global.player.chapterName = '伦敦的画家'
+    global.player.progress = 0
+    global.player.currentTime = '0:00'
+    global.router.push({ uri: '/pages/DemoDetail' })
+  },
 
   onSyncClick() {
-    const states = [
-      ['传输中', '正在传输：长安的荔枝 · 第 8 章', '42', '···', '⇅'],
-      ['同步失败', '蓝牙连接已断开', '42', '重试', '!'],
-      ['同步完成', '已成功同步 1 个新章节', '100', '完成', '✓'],
-      ['等待同步', '连接手机后即可传输新章节', '0', '开始', '⌁']
-    ]
-    const state = states[this.syncStep]
-    this.syncTitle = state[0]
-    this.syncDetail = state[1]
-    this.syncProgress = state[2]
-    this.syncAction = state[3]
-    this.syncIcon = state[4]
-    this.syncStep = (this.syncStep + 1) % states.length
+    global.getPeerStatus((connected) => {
+      if (connected) {
+        this.syncTitle = '手机已连接'
+        this.syncDetail = '等待手机端发送新章节'
+        this.syncAction = '等待'
+        this.syncIcon = '✓'
+      } else {
+        this.syncTitle = '未连接手机'
+        this.syncDetail = '请打开手机端并连接手表'
+        this.syncAction = '重试'
+        this.syncIcon = '!'
+      }
+    })
   }
 }
 </script>

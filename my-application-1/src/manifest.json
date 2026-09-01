@@ -3,11 +3,26 @@
   "name": "腕上听书",
   "versionName": "1.0.0",
   "versionCode": 1,
-  "appCategory": ["other"],
+  "appCategory": ["audiobooks"],
   "icon": "/assets/images/logo.png",
   "features": [
     {
       "name": "blueos.app.appmanager.router"
+    },
+    {
+      "name": "blueos.media.audio.audioPlayer"
+    },
+    {
+      "name": "blueos.media.audio.audioManager"
+    },
+    {
+      "name": "blueos.storage.storage"
+    },
+    {
+      "name": "blueos.storage.file"
+    },
+    {
+      "name": "blueos.bluexlink.connectionManager"
     }
   ],
   "deviceTypeList": [

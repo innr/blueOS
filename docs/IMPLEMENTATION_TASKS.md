@@ -28,7 +28,7 @@
 ### P0-2 修正 manifest
 
 - [x] 校验包名、版本号、图标、设备类型和路由
-- [x] 保持 `appCategory: other`；待 BlueOS Studio 确认官方分类枚举后再评估 `audiobooks`
+- [x] 将 `appCategory` 改为 `audiobooks`（Studio schema 已确认该枚举）
 - [ ] 确认圆形/方形屏幕适配（Studio 预览与真机验收）
 - [x] 增加 manifest 静态校验，并纳入 CI
 - 验收：静态校验通过；BlueOS Studio 解析与启动首页仍待 SDK 环境验证
@@ -44,7 +44,7 @@
 
 ### P0-4 接入真实音频播放
 
-- [ ] 确认 BlueOS 音频 feature/API（需官方 SDK/设备；业务边界已在 `src/platform/audio.js` 固化）
+- [x] 确认 BlueOS 音频 feature/API（Studio 类型包确认 `blueos.media.audio.audioPlayer`）
 - [x] 在 `protocol/playback.py` 固化播放、暂停、停止、跳转、完成和错误状态边界
 - [ ] 绑定并实测支持的 MP3（需官方 SDK/设备）
 - 验收：模拟器或 WATCH GT 可播放 MP3
@@ -52,8 +52,8 @@
 ### P0-5 保存播放进度
 
 - [x] 定义 `PlaybackState` 和状态机
-- [ ] 使用 BlueOS 存储 API 持久化章节和毫秒位置（业务边界已在 `src/platform/progress.js` 固化）
-- [ ] 启动时恢复
+- [x] 使用 BlueOS 存储 API 持久化章节和毫秒位置（`blueos.storage.storage`）
+- [x] 启动时恢复
 - 验收：退出重启后恢复播放位置
 
 ## P1：完善数据和同步
@@ -81,7 +81,7 @@
 
 ### P1-4 蓝牙传输适配器
 
-- [ ] 确认 BLE API 和权限（需官方 SDK/手机与手表）
+- [ ] 确认 BLE API 和权限（设备侧已确认 BlueXlink；手机/手表权限仍需真机）
 - [x] 实现发现、连接、断开、超时和重试适配器边界
 - [x] 接入分片断点续传接口
 - 验收：完成一个 MP3 章节传输
@@ -113,7 +113,7 @@
 - [ ] release 签名，私钥不入库
 - [ ] 生成手表 rpk 和 Android 包
 - [x] 提供 `tools/release_sha256.py` 输出 SHA-256
-- [ ] 完善安装、升级和故障排查文档
+- [x] 完善安装、升级和故障排查文档（`docs/BUILD_AND_DEVICE.md`）
 - 验收：新环境可复现构建和安装
 
 ## 当前执行任务

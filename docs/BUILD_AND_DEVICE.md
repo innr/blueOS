@@ -27,6 +27,11 @@ python tools/release_sha256.py dist/*.rpk mobile/app/build/outputs/apk/**/*.apk
 
 ## API 注入点
 
-`my-application-1/src/platform/audio.js` 和 `progress.js` 定义了业务层需要的
-音频播放、事件回调和进度存储边界。拿到官方 BlueOS SDK 后，在 Studio 工程中
-传入具体 backend；当前仓库不会猜测未经确认的 feature 名称、权限或回调格式。
+应用已声明并调用 Studio 类型包确认的 `blueos.media.audio.audioPlayer`、
+`blueos.media.audio.audioManager`、`blueos.storage.storage`、
+`blueos.storage.file` 和 `blueos.bluexlink.connectionManager`。音频从
+`internal://mass/` 扫描 MP3；没有文件时会明确提示先同步。手机连接实例仍需
+填入手机包名与证书指纹，并在真机上确认权限。
+
+`my-application-1/src/platform/audio.js` 和 `progress.js` 继续作为业务层抽象，
+便于在不同 SDK 版本间替换实现。

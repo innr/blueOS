@@ -2,10 +2,11 @@
   <div class="page">
     <div class="topbar"><input class="back" type="button" value="‹" onclick="onBackClick" /><text class="top-title">正在播放</text><text class="more">···</text></div>
     <div class="book-cover"><text class="cover-title">云边有个</text><text class="cover-title">小卖部</text><text class="cover-author">张嘉佳</text></div>
-    <div class="book-details"><text class="name">云边有个小卖部</text><text class="narrator">张嘉佳 · 演播：有声剧场</text></div>
+    <div class="book-details"><text class="name">{{ bookTitle }}</text><text class="narrator">{{ bookAuthor }} · 演播：有声剧场</text></div>
     <div class="chapter"><text class="chapter-label">第 {{ chapter }} 章</text><text class="chapter-name">{{ chapterName }}</text></div>
     <div class="timeline"><div class="line"><div class="played" style="width: {{ progress }}%;"></div><div class="knob"></div></div><div class="times"><text>{{ currentTime }}</text><text>28:40</text></div></div>
     <div class="controls"><input class="skip" type="button" value="↶ 15" onclick="onPreviousClick" /><input class="play" type="button" value="{{ playing ? 'Ⅱ' : '▶' }}" onclick="onPlayClick" /><input class="skip" type="button" value="15 ↷" onclick="onNextClick" /></div>
+    <text class="error" if="{{ errorText }}">{{ errorText }}</text>
     <div class="volume-row"><text class="volume-label">音量</text><input class="volume-button" type="button" value="−" onclick="onVolumeDownClick" /><div class="volume-track"><div class="volume-fill" style="width: {{ volume }}%;"></div></div><input class="volume-button" type="button" value="+" onclick="onVolumeUpClick" /><text class="volume-value">{{ volume }}%</text></div>
     <div class="bottom"><input class="bottom-button" type="button" value="☷  目录" onclick="onCatalogClick" /><text class="divider">|</text><input class="speed" type="button" value="{{ speed }}×" onclick="onSpeedClick" /><text class="divider">|</text><input class="timer" type="button" value="{{ timerText }}" onclick="onTimerClick" /></div>
   </div>
@@ -22,17 +23,48 @@ export default {
     speed: '1.0',
     timerText: '◷ 定时',
     volume: 60
+    ,bookTitle: '云边有个小卖部'
+    ,bookAuthor: '张嘉佳'
+    ,errorText: ''
+    ,audioReady: false
   },
   onShow() {
+    this.restorePlayback()
     const book = global.library.find((item) => item.id === global.player.bookId)
     const chapter = book && book.chapters.find((item) => item.id === global.player.chapterId)
+    if (book) {
+      this.bookTitle = book.title
+      this.bookAuthor = book.author
+    }
     this.chapter = chapter ? chapter.number : global.player.chapter
     this.chapterName = chapter ? chapter.title : global.player.chapterName
     this.progress = global.player.progress
     this.currentTime = global.player.currentTime
+    this.bindAudioEvents()
+    global.findLocalAudio((uri) => {
+      this.audioReady = !!uri
+      if (uri) {
+        global.player.localUri = uri
+        this.errorText = ''
+      }
+    })
   },
   onBackClick() { global.router.back() },
-  onPlayClick() { this.playing = !this.playing },
+  onPlayClick() {
+    if (!this.audioReady || !global.player.localUri) {
+      this.errorText = '暂无本地音频，请先从手机同步 MP3'
+      return
+    }
+    this.errorText = ''
+    try {
+      global.audioPlayer.src = global.player.localUri
+      if (this.playing) global.audioPlayer.pause()
+      else global.audioPlayer.play()
+    } catch (error) {
+      this.errorText = '音频播放失败，请检查文件格式'
+      this.playing = false
+    }
+  },
   onPreviousClick() { this.skipSeconds(-15) },
   onNextClick() { this.skipSeconds(15) },
   onCatalogClick() {
@@ -46,9 +78,17 @@ export default {
   onTimerClick() {
     this.timerText = this.timerText === '◷ 定时' ? '◷ 15分' : '◷ 定时'
   },
-  onVolumeDownClick() { this.volume = Math.max(0, this.volume - 10) },
-  onVolumeUpClick() { this.volume = Math.min(100, this.volume + 10) },
+  onVolumeDownClick() { this.setVolume(this.volume - 10) },
+  onVolumeUpClick() { this.setVolume(this.volume + 10) },
+  setVolume(value) {
+    this.volume = Math.max(0, Math.min(100, value))
+    try { global.audioManager.setVolume({ volumeType: 'MEDIA', volume: this.volume / 100 }) } catch (error) {}
+  },
   skipSeconds(offset) {
+    if (!global.player.localUri) {
+      this.errorText = '暂无本地音频，无法调整进度'
+      return
+    }
     const currentSeconds = Math.round((1720 * this.progress) / 100)
     this.setPosition(((currentSeconds + offset) * 100) / 1720)
   },
@@ -58,10 +98,62 @@ export default {
     const minutes = Math.floor(seconds / 60)
     const remaining = seconds % 60
     this.currentTime = minutes + ':' + (remaining < 10 ? '0' : '') + remaining
+    try { global.audioPlayer.currentTime = seconds } catch (error) {}
+    this.savePlayerState()
+  },
+  updatePositionFromAudio(seconds) {
+    this.progress = Math.max(0, Math.min(100, (seconds * 100) / 1720))
+    const wholeSeconds = Math.round(seconds)
+    const minutes = Math.floor(wholeSeconds / 60)
+    const remaining = wholeSeconds % 60
+    this.currentTime = minutes + ':' + (remaining < 10 ? '0' : '') + remaining
+    this.savePlayerState()
+  },
+  savePlayerState() {
+    global.player.positionMs = Math.round((1720 * this.progress / 100) * 1000)
     global.player.chapter = this.chapter
     global.player.chapterName = this.chapterName
     global.player.progress = this.progress
     global.player.currentTime = this.currentTime
+  },
+  restorePlayback() {
+    try {
+      const saved = global.storage.getSync({ key: 'playback-state' })
+      if (saved) {
+        const state = typeof saved === 'string' ? JSON.parse(saved) : saved
+        if (state.bookId === global.player.bookId && state.chapterId === global.player.chapterId) {
+          global.player.positionMs = state.positionMs || 0
+          global.player.progress = state.progress || 0
+          global.player.currentTime = state.currentTime || '0:00'
+        }
+      }
+    } catch (error) {}
+  },
+  persistPlayback() {
+    try {
+      global.storage.set({
+        key: 'playback-state',
+        value: JSON.stringify({
+          bookId: global.player.bookId,
+          chapterId: global.player.chapterId,
+          positionMs: Math.round((1720 * this.progress / 100) * 1000),
+          progress: this.progress,
+          currentTime: this.currentTime
+        })
+      })
+    } catch (error) {}
+  },
+  bindAudioEvents() {
+    global.audioPlayer.onPlay = () => { this.playing = true }
+    global.audioPlayer.onPause = () => { this.playing = false; this.persistPlayback() }
+    global.audioPlayer.onStop = () => { this.playing = false; this.persistPlayback() }
+    global.audioPlayer.onEnded = () => { this.playing = false; this.progress = 100; this.persistPlayback() }
+    global.audioPlayer.onError = () => { this.playing = false; this.errorText = '音频播放失败，请检查 MP3 文件' }
+    global.audioPlayer.onTimeUpdate = () => {
+      const seconds = Number(global.audioPlayer.currentTime) || 0
+      this.updatePositionFromAudio(seconds)
+      this.persistPlayback()
+    }
   }
 }
 </script>
@@ -76,5 +168,6 @@ export default {
 .timeline { flex-direction: column; margin-top: 4 * $size-factor; }.line { width: 100%; height: 1 * $size-factor; background-color: #dfd8ce; align-items: center; }.played { width: 44%; height: 100%; background-color: #bd7040; }.knob { width: 2.5 * $size-factor; height: 2.5 * $size-factor; background-color: #bd7040; border-radius: 2 * $size-factor; margin-left: -1 * $size-factor; }.times { justify-content: space-between; margin-top: 1 * $size-factor; }.times text { color: #a89f95; font-size: 2.5 * $size-factor; }
 .controls { align-items: center; justify-content: center; margin-top: 5 * $size-factor; }.skip { width: 15 * $size-factor; color: #685e54; font-size: 3 * $size-factor; background-color: transparent; }.play { width: 14 * $size-factor; height: 14 * $size-factor; color: #fffaf2; font-size: 6 * $size-factor; background-color: #bd7040; border-radius: 8 * $size-factor; margin: 0 7 * $size-factor; }
 .volume-row { height: 7 * $size-factor; align-items: center; margin-top: 3 * $size-factor; }.volume-label { color: #81766b; font-size: 2.7 * $size-factor; }.volume-button { width: 6 * $size-factor; color: #776d62; font-size: 4 * $size-factor; background-color: transparent; text-align: center; }.volume-track { flex: 1; height: 1 * $size-factor; background-color: #dfd8ce; border-radius: 1 * $size-factor; }.volume-fill { height: 100%; background-color: #bd7040; border-radius: 1 * $size-factor; }.volume-value { width: 9 * $size-factor; color: #a0978d; font-size: 2.5 * $size-factor; text-align: right; }
+.error { color: #bb4d3d; font-size: 2.5 * $size-factor; text-align: center; margin-top: 2 * $size-factor; }
 .bottom { align-items: center; justify-content: center; margin-top: 3 * $size-factor; }.bottom-button, .speed, .timer { color: #776d62; font-size: 3 * $size-factor; background-color: transparent; }.divider { color: #d1c9bf; margin: 0 3 * $size-factor; }
 </style>
