@@ -37,3 +37,16 @@ class PlaybackAndStorageTests(unittest.TestCase):
             with self.assertRaisesRegex(MediaError, 'INSUFFICIENT_SPACE'):
                 repository.start('chapter-1', 'chapter.mp3', 3)
 
+    def test_media_delete_and_retransfer(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repository = MediaRepository(directory, capacity_bytes=20)
+            digest = hashlib.sha256(b'new').hexdigest()
+            repository.start('chapter-1', 'chapter.mp3', 3)
+            repository.append('chapter-1', b'new')
+            repository.finish('chapter-1', digest)
+            self.assertTrue(repository.delete('chapter-1'))
+            self.assertFalse(repository.has_complete('chapter-1'))
+            repository.start('chapter-1', 'chapter.mp3', 3)
+            repository.append('chapter-1', b'new')
+            repository.finish('chapter-1', digest)
+            self.assertTrue(repository.has_complete('chapter-1'))
