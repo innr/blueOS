@@ -28,7 +28,7 @@
       <text class="count">3 本</text>
     </div>
 
-    <div class="book-row" onclick="onBookClick">
+    <div class="book-row" onclick="onLycheeClick">
       <div class="cover cover-blue"><text class="cover-mark small">海</text></div>
       <div class="book-info">
         <text class="row-title">海底两万里</text>
@@ -38,7 +38,7 @@
       <text class="play-mini">▶</text>
     </div>
 
-    <div class="book-row" onclick="onBookClick">
+    <div class="book-row" onclick="onContinueClick">
       <div class="cover cover-orange"><text class="cover-mark small">城</text></div>
       <div class="book-info">
         <text class="row-title">长安的荔枝</text>
@@ -75,6 +75,16 @@ export default {
   },
 
   onBookClick() {
+    global.router.push({ uri: '/pages/DemoDetail' })
+  },
+  onLycheeClick() {
+    global.player.bookId = 'lychee'
+    global.player.chapterId = 'lychee-1'
+    global.player.positionMs = 0
+    global.player.chapter = 1
+    global.player.chapterName = '荔枝使者'
+    global.player.progress = 0
+    global.player.currentTime = '0:00'
     global.router.push({ uri: '/pages/DemoDetail' })
   },
 

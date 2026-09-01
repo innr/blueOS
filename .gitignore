@@ -3,3 +3,5 @@ __pycache__/
 .venv/
 dist/
 *.rpk
+mobile/.gradle/
+mobile/**/build/

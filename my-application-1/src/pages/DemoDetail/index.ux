@@ -24,8 +24,10 @@ export default {
     volume: 60
   },
   onShow() {
-    this.chapter = global.player.chapter
-    this.chapterName = global.player.chapterName
+    const book = global.library.find((item) => item.id === global.player.bookId)
+    const chapter = book && book.chapters.find((item) => item.id === global.player.chapterId)
+    this.chapter = chapter ? chapter.number : global.player.chapter
+    this.chapterName = chapter ? chapter.title : global.player.chapterName
     this.progress = global.player.progress
     this.currentTime = global.player.currentTime
   },

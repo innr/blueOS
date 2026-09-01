@@ -3,3 +3,4 @@ build/
 .ide/
 .preview.json
 *.rpk
+sign/

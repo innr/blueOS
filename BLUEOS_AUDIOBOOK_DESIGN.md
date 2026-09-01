@@ -70,17 +70,15 @@ TransferTask { id, chapterId, bytesSent, totalBytes, status, errorCode? }
 
 ```text
 blueOS/
-├─ watch/                 # BlueOS 手表应用
-│  ├─ app/                 # 页面与状态机
-│  ├─ domain/              # 平台无关业务逻辑
-│  ├─ platform/            # BlueOS SDK 适配层
-│  └─ tests/
-├─ mobile/                # Android companion app
+├─ my-application-1/      # 唯一的 BlueOS 手表工程（Studio 入口）
+│  ├─ src/                # 页面、状态与资源
+│  └─ scripts/            # 工程辅助脚本
+├─ protocol/              # 平台无关协议模型与虚拟传输端
+├─ tests/                 # 协议与工程静态测试
+├─ mobile/                # Android companion app（待创建）
 │  ├─ app/
 │  ├─ domain/
 │  └─ tests/
-├─ protocol/              # 协议定义、样例和兼容性测试
-├─ tools/                  # 构建、打包、校验脚本
 ├─ docs/
 └─ README.md
 ```
