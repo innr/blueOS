@@ -1,0 +1,93 @@
+<template>
+  <div class="page">
+    <div class="hero">
+      <text class="eyebrow">腕上听书</text>
+      <text class="greeting">晚上好，听一段故事吧</text>
+      <text class="subline">已为你同步最近的收听进度</text>
+    </div>
+
+    <div class="continue-card" onclick="onContinueClick">
+      <div class="cover cover-main"><text class="cover-mark">山</text></div>
+      <div class="continue-info">
+        <text class="book-name">云边有个小卖部</text>
+        <text class="author">张嘉佳 · 有声书</text>
+        <div class="progress-track"><div class="progress-fill"></div></div>
+        <text class="progress-text">已听 3时28分 · 第 18 章</text>
+      </div>
+      <text class="arrow">›</text>
+    </div>
+
+    <div class="section-heading">
+      <text class="section-title">我的书架</text>
+      <text class="count">3 本</text>
+    </div>
+
+    <div class="book-row" onclick="onBookClick">
+      <div class="cover cover-blue"><text class="cover-mark small">海</text></div>
+      <div class="book-info">
+        <text class="row-title">海底两万里</text>
+        <text class="row-meta">儒勒·凡尔纳 · 42 集</text>
+        <text class="row-status">未开始</text>
+      </div>
+      <text class="play-mini">▶</text>
+    </div>
+
+    <div class="book-row" onclick="onBookClick">
+      <div class="cover cover-orange"><text class="cover-mark small">城</text></div>
+      <div class="book-info">
+        <text class="row-title">长安的荔枝</text>
+        <text class="row-meta">马伯庸 · 26 集</text>
+        <text class="row-status active">已听 62%</text>
+      </div>
+      <text class="play-mini">▶</text>
+    </div>
+
+    <div class="book-row" onclick="onBookClick">
+      <div class="cover cover-green"><text class="cover-mark small">月</text></div>
+      <div class="book-info">
+        <text class="row-title">月亮与六便士</text>
+        <text class="row-meta">毛姆 · 31 集</text>
+        <text class="row-status">已听 1 集</text>
+      </div>
+      <text class="play-mini">▶</text>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  onContinueClick() {
+    global.router.push({ uri: '/pages/DemoDetail' })
+  },
+
+  onBookClick() {
+    global.router.push({ uri: '/pages/DemoDetail' })
+  }
+}
+</script>
+
+<style lang="scss">
+@import './../../assets/styles/style.scss';
+
+.page { flex-direction: column; padding: 8 * $size-factor 5 * $size-factor; background-color: #f7f5ef; }
+.hero { flex-direction: column; margin-bottom: 6 * $size-factor; }
+.eyebrow { color: #b06d39; font-size: 3 * $size-factor; letter-spacing: 1 * $size-factor; }
+.greeting { color: #28231e; font-size: 6 * $size-factor; font-weight: 600; margin-top: 1 * $size-factor; }
+.subline { color: #91877b; font-size: 3 * $size-factor; margin-top: 2 * $size-factor; }
+.continue-card { align-items: center; background-color: #fffdf8; border-radius: 4 * $size-factor; padding: 3 * $size-factor; box-shadow: 0 2 * $size-factor 8 * $size-factor #ded8cf; }
+.cover { width: 16 * $size-factor; height: 21 * $size-factor; border-radius: 2 * $size-factor; justify-content: center; align-items: center; }
+.cover-main { background-color: #c97d47; }.cover-blue { background-color: #496f89; }.cover-orange { background-color: #d19055; }.cover-green { background-color: #617d62; }
+.cover-mark { color: #fff7e8; font-size: 9 * $size-factor; }.cover-mark.small { font-size: 7 * $size-factor; }
+.continue-info { flex: 1; flex-direction: column; margin-left: 3 * $size-factor; }
+.book-name, .row-title { color: #302a25; font-size: 4 * $size-factor; font-weight: 600; }
+.author, .row-meta { color: #958a7e; font-size: 3 * $size-factor; margin-top: 1 * $size-factor; }
+.progress-track { width: 100%; height: 1 * $size-factor; background-color: #ebe5dc; border-radius: 1 * $size-factor; margin-top: 3 * $size-factor; }
+.progress-fill { width: 46%; height: 100%; background-color: #c97942; border-radius: 1 * $size-factor; }
+.progress-text, .row-status { color: #a2978c; font-size: 2.5 * $size-factor; margin-top: 2 * $size-factor; }
+.arrow { color: #c3baaf; font-size: 7 * $size-factor; margin-left: 2 * $size-factor; }
+.section-heading { align-items: center; justify-content: space-between; margin-top: 7 * $size-factor; margin-bottom: 2 * $size-factor; }
+.section-title { color: #342d27; font-size: 4 * $size-factor; font-weight: 600; }.count { color: #a89e94; font-size: 3 * $size-factor; }
+.book-row { align-items: center; padding: 3 * $size-factor 0; border-bottom-width: 1px; border-bottom-color: #e7e1d8; }
+.book-row .cover { width: 11 * $size-factor; height: 14 * $size-factor; }.book-info { flex: 1; flex-direction: column; margin-left: 3 * $size-factor; }
+.row-status.active { color: #bd7140; }.play-mini { color: #bf7442; font-size: 4 * $size-factor; }
+</style>

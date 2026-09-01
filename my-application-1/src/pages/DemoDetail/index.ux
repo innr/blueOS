@@ -1,0 +1,69 @@
+<template>
+  <div class="page">
+    <div class="topbar"><input class="back" type="button" value="‹" onclick="onBackClick" /><text class="top-title">正在播放</text><text class="more">···</text></div>
+    <div class="book-cover"><text class="cover-title">云边有个</text><text class="cover-title">小卖部</text><text class="cover-author">张嘉佳</text></div>
+    <div class="book-details"><text class="name">云边有个小卖部</text><text class="narrator">张嘉佳 · 演播：有声剧场</text></div>
+    <div class="chapter"><text class="chapter-label">第 {{ chapter }} 章</text><text class="chapter-name">{{ chapterName }}</text></div>
+    <div class="timeline"><div class="line"><div class="played" style="width: {{ progress }}%;"></div><div class="knob"></div></div><div class="times"><text>{{ currentTime }}</text><text>28:40</text></div></div>
+    <div class="controls"><input class="skip" type="button" value="↶ 15" onclick="onPreviousClick" /><input class="play" type="button" value="{{ playing ? 'Ⅱ' : '▶' }}" onclick="onPlayClick" /><input class="skip" type="button" value="15 ↷" onclick="onNextClick" /></div>
+    <div class="bottom"><input class="bottom-button" type="button" value="☷  目录" onclick="onCatalogClick" /><text class="divider">|</text><input class="speed" type="button" value="{{ speed }}×" onclick="onSpeedClick" /><text class="divider">|</text><input class="timer" type="button" value="{{ timerText }}" onclick="onTimerClick" /></div>
+  </div>
+</template>
+
+<script>
+export default {
+  data: {
+    playing: false,
+    progress: 44,
+    currentTime: '12:36',
+    chapter: 18,
+    chapterName: '山中岁月长',
+    speed: '1.0',
+    timerText: '◷ 定时'
+  },
+  onShow() {
+    this.chapter = global.player.chapter
+    this.chapterName = global.player.chapterName
+    this.progress = global.player.progress
+    this.currentTime = global.player.currentTime
+  },
+  onBackClick() { global.router.back() },
+  onPlayClick() { this.playing = !this.playing },
+  onPreviousClick() { this.setPosition(this.progress - 1) },
+  onNextClick() { this.setPosition(this.progress + 1) },
+  onCatalogClick() {
+    global.router.push({ uri: '/pages/Catalog' })
+  },
+  onSpeedClick() {
+    const speeds = ['1.0', '1.25', '1.5', '2.0']
+    const index = speeds.indexOf(this.speed)
+    this.speed = speeds[(index + 1) % speeds.length]
+  },
+  onTimerClick() {
+    this.timerText = this.timerText === '◷ 定时' ? '◷ 15分' : '◷ 定时'
+  },
+  setPosition(progress) {
+    this.progress = Math.max(0, Math.min(100, progress))
+    const seconds = Math.round((1700 * this.progress) / 100)
+    const minutes = Math.floor(seconds / 60)
+    const remaining = seconds % 60
+    this.currentTime = minutes + ':' + (remaining < 10 ? '0' : '') + remaining
+    global.player.chapter = this.chapter
+    global.player.chapterName = this.chapterName
+    global.player.progress = this.progress
+    global.player.currentTime = this.currentTime
+  }
+}
+</script>
+
+<style lang="scss">
+@import './../../assets/styles/style.scss';
+.page { flex-direction: column; padding: 5 * $size-factor; background-color: #f7f5ef; }
+.topbar { height: 9 * $size-factor; align-items: center; justify-content: space-between; }.back { color: #5a5148; font-size: 8 * $size-factor; background-color: transparent; }.top-title { color: #5e554b; font-size: 3 * $size-factor; }.more { color: #5e554b; font-size: 5 * $size-factor; }
+.book-cover { width: 38 * $size-factor; height: 48 * $size-factor; flex-direction: column; justify-content: center; align-items: center; align-self: center; background-color: #c97d47; border-radius: 3 * $size-factor; margin-top: 4 * $size-factor; box-shadow: 0 4 * $size-factor 10 * $size-factor #d6cdc2; }.cover-title { color: #fff8eb; font-size: 7 * $size-factor; font-weight: 600; }.cover-author { color: #f6ddc6; font-size: 3 * $size-factor; margin-top: 4 * $size-factor; }
+.book-details { flex-direction: column; align-items: center; margin-top: 5 * $size-factor; }.name { color: #322b25; font-size: 5 * $size-factor; font-weight: 600; }.narrator { color: #988d80; font-size: 3 * $size-factor; margin-top: 1 * $size-factor; }
+.chapter { flex-direction: column; align-items: center; margin-top: 6 * $size-factor; }.chapter-label { color: #aa714c; font-size: 3 * $size-factor; }.chapter-name { color: #51483f; font-size: 3.5 * $size-factor; margin-top: 1 * $size-factor; }
+.timeline { flex-direction: column; margin-top: 4 * $size-factor; }.line { width: 100%; height: 1 * $size-factor; background-color: #dfd8ce; align-items: center; }.played { width: 44%; height: 100%; background-color: #bd7040; }.knob { width: 2.5 * $size-factor; height: 2.5 * $size-factor; background-color: #bd7040; border-radius: 2 * $size-factor; margin-left: -1 * $size-factor; }.times { justify-content: space-between; margin-top: 1 * $size-factor; }.times text { color: #a89f95; font-size: 2.5 * $size-factor; }
+.controls { align-items: center; justify-content: center; margin-top: 5 * $size-factor; }.skip { width: 15 * $size-factor; color: #685e54; font-size: 3 * $size-factor; background-color: transparent; }.play { width: 14 * $size-factor; height: 14 * $size-factor; color: #fffaf2; font-size: 6 * $size-factor; background-color: #bd7040; border-radius: 8 * $size-factor; margin: 0 7 * $size-factor; }
+.bottom { align-items: center; justify-content: center; margin-top: 5 * $size-factor; }.bottom-button, .speed, .timer { color: #776d62; font-size: 3 * $size-factor; background-color: transparent; }.divider { color: #d1c9bf; margin: 0 3 * $size-factor; }
+</style>

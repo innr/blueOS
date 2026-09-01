@@ -1,0 +1,37 @@
+<template>
+  <div class="page">
+    <div class="topbar"><input class="back" type="button" value="‹" onclick="onBackClick" /><text class="title">章节目录</text><text class="total">共 42 章</text></div>
+    <div class="now-playing"><text class="now-label">正在收听</text><text class="now-chapter">第 18 章 · 山中岁月长</text></div>
+    <div class="chapter-row" onclick="onChapter16Click"><text class="chapter-index">第 16 章</text><text class="chapter-title">故乡的云</text><text class="duration">27:15</text></div>
+    <div class="chapter-row" onclick="onChapter17Click"><text class="chapter-index">第 17 章</text><text class="chapter-title">一个人的夏天</text><text class="duration">26:42</text></div>
+    <div class="chapter-row selected" onclick="onChapter18Click"><text class="chapter-index active">▶ 第 18 章</text><text class="chapter-title active">山中岁月长</text><text class="duration active">28:40</text></div>
+    <div class="chapter-row" onclick="onChapter19Click"><text class="chapter-index">第 19 章</text><text class="chapter-title">风从云边来</text><text class="duration">29:08</text></div>
+    <div class="chapter-row" onclick="onChapter20Click"><text class="chapter-index">第 20 章</text><text class="chapter-title">再见，少年</text><text class="duration">30:21</text></div>
+  </div>
+</template>
+
+<script>
+export default {
+  onBackClick() { global.router.back() },
+  onChapter16Click() { this.selectChapter(16, '故乡的云') },
+  onChapter17Click() { this.selectChapter(17, '一个人的夏天') },
+  onChapter18Click() { this.selectChapter(18, '山中岁月长') },
+  onChapter19Click() { this.selectChapter(19, '风从云边来') },
+  onChapter20Click() { this.selectChapter(20, '再见，少年') },
+  selectChapter(chapter, chapterName) {
+    global.player.chapter = chapter
+    global.player.chapterName = chapterName
+    global.player.progress = 0
+    global.player.currentTime = '0:00'
+    global.router.back()
+  }
+}
+</script>
+
+<style lang="scss">
+@import './../../assets/styles/style.scss';
+.page { flex-direction: column; padding: 5 * $size-factor; background-color: #f7f5ef; }
+.topbar { height: 9 * $size-factor; align-items: center; }.back { width: 9 * $size-factor; color: #5a5148; font-size: 8 * $size-factor; background-color: transparent; }.title { flex: 1; color: #382f28; font-size: 4 * $size-factor; text-align: center; font-weight: 600; }.total { width: 9 * $size-factor; color: #a69b8f; font-size: 2.5 * $size-factor; text-align: right; }
+.now-playing { flex-direction: column; background-color: #fffaf3; border-radius: 3 * $size-factor; padding: 3 * $size-factor; margin-top: 3 * $size-factor; margin-bottom: 4 * $size-factor; }.now-label { color: #b77347; font-size: 2.5 * $size-factor; }.now-chapter { color: #574b41; font-size: 3.5 * $size-factor; margin-top: 1 * $size-factor; }
+.chapter-row { height: 11 * $size-factor; align-items: center; border-bottom-width: 1px; border-bottom-color: #e6dfd5; }.chapter-row.selected { background-color: #f2e5da; border-radius: 2 * $size-factor; padding-left: 2 * $size-factor; padding-right: 2 * $size-factor; }.chapter-index { width: 16 * $size-factor; color: #8e8479; font-size: 2.7 * $size-factor; }.chapter-title { flex: 1; color: #51473e; font-size: 3.2 * $size-factor; }.duration { color: #a59b90; font-size: 2.5 * $size-factor; }.active { color: #bb7042; }
+</style>
