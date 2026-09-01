@@ -1,0 +1,14 @@
+<script>
+/**
+ * BlueOS application entry point.
+ *
+ * Audio and Bluetooth APIs stay outside this bootstrap until their exact
+ * WATCH GT SDK surface is verified in BlueOS Studio. The home page currently
+ * provides a safe simulator UI for PR2 startup validation.
+ */
+export default {
+  onCreate() {
+    console.log('BlueOS Audiobook created')
+  }
+}
+</script>

@@ -1,0 +1,154 @@
+<script>
+import { PLAYBACK_STATUS } from '../../global.js'
+
+export default {
+  data: {
+    appTitle: '蓝河听书',
+    bookCount: 1,
+    bookTitle: '示例有声书',
+    chapterTitle: '第一章：开始阅读',
+    statusText: '待播放',
+    playLabel: '开始播放',
+    positionLabel: '00:00',
+    durationLabel: '12:00',
+    notice: 'PR2 启动验证界面 · 音频接口待接入',
+    status: PLAYBACK_STATUS.IDLE,
+    positionSeconds: 0,
+    durationSeconds: 720
+  },
+
+  togglePlayback() {
+    if (this.status === PLAYBACK_STATUS.PLAYING) {
+      this.status = PLAYBACK_STATUS.PAUSED
+      this.statusText = '已暂停'
+      this.playLabel = '继续播放'
+      this.notice = '播放状态已保存（模拟）'
+      return
+    }
+
+    this.status = PLAYBACK_STATUS.PLAYING
+    this.statusText = '播放中'
+    this.playLabel = '暂停'
+    this.notice = '当前为 PR2 模拟播放，待接入 BlueOS 音频 API'
+  },
+
+  rewind() {
+    this.positionSeconds = Math.max(0, this.positionSeconds - 15)
+    this.positionLabel = this.formatTime(this.positionSeconds)
+    this.notice = '已后退 15 秒（模拟）'
+  },
+
+  forward() {
+    this.positionSeconds = Math.min(this.durationSeconds, this.positionSeconds + 15)
+    this.positionLabel = this.formatTime(this.positionSeconds)
+    this.notice = '已前进 15 秒（模拟）'
+  },
+
+  showTransferStatus() {
+    this.notice = '传输状态：等待手机端连接'
+  },
+
+  formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60)
+    const remainder = seconds % 60
+    return (minutes < 10 ? '0' : '') + minutes + ':' + (remainder < 10 ? '0' : '') + remainder
+  }
+}
+</script>
+
+<template>
+  <div class="page">
+    <text class="title">{{appTitle}}</text>
+    <text class="library">本地书架 · {{bookCount}} 本</text>
+
+    <div class="book-card">
+      <text class="book-title">{{bookTitle}}</text>
+      <text class="chapter-title">{{chapterTitle}}</text>
+      <text class="status">{{statusText}}</text>
+      <text class="progress">{{positionLabel}} / {{durationLabel}}</text>
+      <input type="button" class="primary" value="{{playLabel}}" onclick="togglePlayback" />
+    </div>
+
+    <div class="actions">
+      <input type="button" class="secondary" value="−15 秒" onclick="rewind" />
+      <input type="button" class="secondary" value="+15 秒" onclick="forward" />
+    </div>
+
+    <input type="button" class="transfer" value="查看传输状态" onclick="showTransferStatus" />
+    <text class="notice">{{notice}}</text>
+  </div>
+</template>
+
+<style>
+@tailwind utilities;
+
+.page {
+  flex-direction: column;
+  padding: 28px;
+  background-color: #0D1117;
+}
+
+.title {
+  color: #F0F6FC;
+  font-size: 34px;
+  font-weight: bold;
+}
+
+.library, .notice {
+  color: #8B949E;
+  font-size: 18px;
+  margin-top: 8px;
+}
+
+.book-card {
+  flex-direction: column;
+  padding: 22px;
+  margin-top: 24px;
+  background-color: #161B22;
+  border-radius: 20px;
+}
+
+.book-title {
+  color: #58A6FF;
+  font-size: 26px;
+  font-weight: bold;
+}
+
+.chapter-title, .status, .progress {
+  color: #F0F6FC;
+  font-size: 20px;
+  margin-top: 10px;
+}
+
+.progress {
+  color: #8B949E;
+}
+
+.primary, .transfer {
+  height: 64px;
+  margin-top: 18px;
+  color: #FFFFFF;
+  background-color: #238636;
+  border-radius: 14px;
+  font-size: 22px;
+}
+
+.actions {
+  flex-direction: row;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.secondary {
+  width: 190px;
+  height: 58px;
+  color: #F0F6FC;
+  background-color: #21262D;
+  border-radius: 14px;
+  font-size: 20px;
+}
+
+.transfer {
+  background-color: #1F6FEB;
+}
+</style>
