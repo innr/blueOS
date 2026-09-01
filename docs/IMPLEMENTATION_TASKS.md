@@ -7,9 +7,10 @@
 当前 `my-application-1/` 是唯一的、可展示的 BlueOS UI 原型：
 
 - 首页、播放页、章节目录页已存在
-- 播放、音量、倍速、定时和同步目前都是 UI 模拟
-- 没有真实音频 API、蓝牙传输、持久化进度或 Android 手机端
-- `manifest.json` 的 `appCategory` 仍为 `other`
+- 播放、音量和进度已调用 BlueOS 音频/存储 API；缺少本地 MP3 时会显示明确错误
+- BlueXlink 连接状态已接入，但手机文件传输和分片协议仍需端到端接线
+- 倍速与定时仍是应用层控制，需根据设备策略补充实际行为
+- `manifest.json` 的 `appCategory` 已改为 `audiobooks`
 - 已确认仓库中不存在独立的 `watch/` 工程；`my-application-1/` 是唯一入口
 - 现有 CI 只测试 Python，不测试 BlueOS 工程
 - 尚未完成 BlueOS Studio、debug `.rpk` 或 WATCH GT 真机验收
