@@ -6,6 +6,7 @@
     <div class="chapter"><text class="chapter-label">第 {{ chapter }} 章</text><text class="chapter-name">{{ chapterName }}</text></div>
     <div class="timeline"><div class="line"><div class="played" style="width: {{ progress }}%;"></div><div class="knob"></div></div><div class="times"><text>{{ currentTime }}</text><text>28:40</text></div></div>
     <div class="controls"><input class="skip" type="button" value="↶ 15" onclick="onPreviousClick" /><input class="play" type="button" value="{{ playing ? 'Ⅱ' : '▶' }}" onclick="onPlayClick" /><input class="skip" type="button" value="15 ↷" onclick="onNextClick" /></div>
+    <div class="volume-row"><text class="volume-label">音量</text><input class="volume-button" type="button" value="−" onclick="onVolumeDownClick" /><div class="volume-track"><div class="volume-fill" style="width: {{ volume }}%;"></div></div><input class="volume-button" type="button" value="+" onclick="onVolumeUpClick" /><text class="volume-value">{{ volume }}%</text></div>
     <div class="bottom"><input class="bottom-button" type="button" value="☷  目录" onclick="onCatalogClick" /><text class="divider">|</text><input class="speed" type="button" value="{{ speed }}×" onclick="onSpeedClick" /><text class="divider">|</text><input class="timer" type="button" value="{{ timerText }}" onclick="onTimerClick" /></div>
   </div>
 </template>
@@ -19,7 +20,8 @@ export default {
     chapter: 18,
     chapterName: '山中岁月长',
     speed: '1.0',
-    timerText: '◷ 定时'
+    timerText: '◷ 定时',
+    volume: 60
   },
   onShow() {
     this.chapter = global.player.chapter
@@ -29,8 +31,8 @@ export default {
   },
   onBackClick() { global.router.back() },
   onPlayClick() { this.playing = !this.playing },
-  onPreviousClick() { this.setPosition(this.progress - 1) },
-  onNextClick() { this.setPosition(this.progress + 1) },
+  onPreviousClick() { this.skipSeconds(-15) },
+  onNextClick() { this.skipSeconds(15) },
   onCatalogClick() {
     global.router.push({ uri: '/pages/Catalog' })
   },
@@ -42,9 +44,15 @@ export default {
   onTimerClick() {
     this.timerText = this.timerText === '◷ 定时' ? '◷ 15分' : '◷ 定时'
   },
+  onVolumeDownClick() { this.volume = Math.max(0, this.volume - 10) },
+  onVolumeUpClick() { this.volume = Math.min(100, this.volume + 10) },
+  skipSeconds(offset) {
+    const currentSeconds = Math.round((1720 * this.progress) / 100)
+    this.setPosition(((currentSeconds + offset) * 100) / 1720)
+  },
   setPosition(progress) {
     this.progress = Math.max(0, Math.min(100, progress))
-    const seconds = Math.round((1700 * this.progress) / 100)
+    const seconds = Math.round((1720 * this.progress) / 100)
     const minutes = Math.floor(seconds / 60)
     const remaining = seconds % 60
     this.currentTime = minutes + ':' + (remaining < 10 ? '0' : '') + remaining
@@ -65,5 +73,6 @@ export default {
 .chapter { flex-direction: column; align-items: center; margin-top: 6 * $size-factor; }.chapter-label { color: #aa714c; font-size: 3 * $size-factor; }.chapter-name { color: #51483f; font-size: 3.5 * $size-factor; margin-top: 1 * $size-factor; }
 .timeline { flex-direction: column; margin-top: 4 * $size-factor; }.line { width: 100%; height: 1 * $size-factor; background-color: #dfd8ce; align-items: center; }.played { width: 44%; height: 100%; background-color: #bd7040; }.knob { width: 2.5 * $size-factor; height: 2.5 * $size-factor; background-color: #bd7040; border-radius: 2 * $size-factor; margin-left: -1 * $size-factor; }.times { justify-content: space-between; margin-top: 1 * $size-factor; }.times text { color: #a89f95; font-size: 2.5 * $size-factor; }
 .controls { align-items: center; justify-content: center; margin-top: 5 * $size-factor; }.skip { width: 15 * $size-factor; color: #685e54; font-size: 3 * $size-factor; background-color: transparent; }.play { width: 14 * $size-factor; height: 14 * $size-factor; color: #fffaf2; font-size: 6 * $size-factor; background-color: #bd7040; border-radius: 8 * $size-factor; margin: 0 7 * $size-factor; }
-.bottom { align-items: center; justify-content: center; margin-top: 5 * $size-factor; }.bottom-button, .speed, .timer { color: #776d62; font-size: 3 * $size-factor; background-color: transparent; }.divider { color: #d1c9bf; margin: 0 3 * $size-factor; }
+.volume-row { height: 7 * $size-factor; align-items: center; margin-top: 3 * $size-factor; }.volume-label { color: #81766b; font-size: 2.7 * $size-factor; }.volume-button { width: 6 * $size-factor; color: #776d62; font-size: 4 * $size-factor; background-color: transparent; text-align: center; }.volume-track { flex: 1; height: 1 * $size-factor; background-color: #dfd8ce; border-radius: 1 * $size-factor; }.volume-fill { height: 100%; background-color: #bd7040; border-radius: 1 * $size-factor; }.volume-value { width: 9 * $size-factor; color: #a0978d; font-size: 2.5 * $size-factor; text-align: right; }
+.bottom { align-items: center; justify-content: center; margin-top: 3 * $size-factor; }.bottom-button, .speed, .timer { color: #776d62; font-size: 3 * $size-factor; background-color: transparent; }.divider { color: #d1c9bf; margin: 0 3 * $size-factor; }
 </style>

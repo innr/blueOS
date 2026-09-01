@@ -6,6 +6,12 @@
       <text class="subline">已为你同步最近的收听进度</text>
     </div>
 
+    <div class="sync-card" onclick="onSyncClick">
+      <div class="sync-icon"><text>{{ syncIcon }}</text></div>
+      <div class="sync-info"><text class="sync-title">{{ syncTitle }}</text><text class="sync-detail">{{ syncDetail }}</text><div class="sync-track"><div class="sync-fill" style="width: {{ syncProgress }}%;"></div></div></div>
+      <text class="sync-action">{{ syncAction }}</text>
+    </div>
+
     <div class="continue-card" onclick="onContinueClick">
       <div class="cover cover-main"><text class="cover-mark">山</text></div>
       <div class="continue-info">
@@ -56,12 +62,36 @@
 
 <script>
 export default {
+  data: {
+    syncStep: 0,
+    syncTitle: '等待同步',
+    syncDetail: '连接手机后即可传输新章节',
+    syncAction: '开始',
+    syncIcon: '⌁',
+    syncProgress: 0
+  },
   onContinueClick() {
     global.router.push({ uri: '/pages/DemoDetail' })
   },
 
   onBookClick() {
     global.router.push({ uri: '/pages/DemoDetail' })
+  },
+
+  onSyncClick() {
+    const states = [
+      ['传输中', '正在传输：长安的荔枝 · 第 8 章', '42', '···', '⇅'],
+      ['同步失败', '蓝牙连接已断开', '42', '重试', '!'],
+      ['同步完成', '已成功同步 1 个新章节', '100', '完成', '✓'],
+      ['等待同步', '连接手机后即可传输新章节', '0', '开始', '⌁']
+    ]
+    const state = states[this.syncStep]
+    this.syncTitle = state[0]
+    this.syncDetail = state[1]
+    this.syncProgress = state[2]
+    this.syncAction = state[3]
+    this.syncIcon = state[4]
+    this.syncStep = (this.syncStep + 1) % states.length
   }
 }
 </script>
@@ -74,6 +104,7 @@ export default {
 .eyebrow { color: #b06d39; font-size: 3 * $size-factor; letter-spacing: 1 * $size-factor; }
 .greeting { color: #28231e; font-size: 6 * $size-factor; font-weight: 600; margin-top: 1 * $size-factor; }
 .subline { color: #91877b; font-size: 3 * $size-factor; margin-top: 2 * $size-factor; }
+.sync-card { height: 16 * $size-factor; align-items: center; background-color: #f0e5d9; border-radius: 3 * $size-factor; padding: 2 * $size-factor 3 * $size-factor; margin-bottom: 3 * $size-factor; }.sync-icon { width: 8 * $size-factor; height: 8 * $size-factor; justify-content: center; align-items: center; background-color: #d6a27a; border-radius: 5 * $size-factor; }.sync-icon text { color: #fffaf3; font-size: 4 * $size-factor; }.sync-info { flex: 1; flex-direction: column; margin-left: 2 * $size-factor; }.sync-title { color: #59473b; font-size: 3 * $size-factor; font-weight: 600; }.sync-detail { color: #907b6b; font-size: 2.3 * $size-factor; margin-top: 1 * $size-factor; }.sync-track { width: 100%; height: 1 * $size-factor; background-color: #e1d2c4; border-radius: 1 * $size-factor; margin-top: 1 * $size-factor; }.sync-fill { height: 100%; background-color: #be7648; border-radius: 1 * $size-factor; }.sync-action { color: #b2693e; font-size: 2.7 * $size-factor; margin-left: 2 * $size-factor; }
 .continue-card { align-items: center; background-color: #fffdf8; border-radius: 4 * $size-factor; padding: 3 * $size-factor; box-shadow: 0 2 * $size-factor 8 * $size-factor #ded8cf; }
 .cover { width: 16 * $size-factor; height: 21 * $size-factor; border-radius: 2 * $size-factor; justify-content: center; align-items: center; }
 .cover-main { background-color: #c97d47; }.cover-blue { background-color: #496f89; }.cover-orange { background-color: #d19055; }.cover-green { background-color: #617d62; }
